@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Squad Team" />
+  <meta name="theme-color" content="#09090b" />
+  <title>Squad Studios | حسابات الفريق والمعدات</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Cairo', 'sans-serif'] },
+          colors: {
+            cinema: {
+              950: '#09090b',
+              900: '#121215',
+              850: '#18181c',
+              800: '#202026',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #09090b;
+      color: #f4f4f5;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #121215; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-cinema-950 text-zinc-100 selection:bg-amber-500 selection:text-black">
+
+  <!-- الشريط العلوي -->
+  <header class="sticky top-0 z-40 bg-cinema-900/95 backdrop-blur-md border-b border-zinc-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-sky-500/20">
+          <i class="fa-solid fa-users-gear"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white leading-none">
+            SQUAD <span class="text-sky-400">TEAM</span>
+          </h1>
+          <p id="header-subtitle" class="text-[11px] text-zinc-400 mt-1">حسابات الفريق والمونتاج وإيجار المعدات</p>
+        </div>
+      </div>
+
+      <!-- أزرار التحكم والمزامنة -->
+      <div class="flex items-center gap-2">
+        <span id="current-role-badge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[11px] font-bold">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span id="current-role-label">وضع المدير</span>
+        </span>
+        <button type="button" onclick="openDriveModal()" id="drive-status-btn" class="admin-only flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500 text-sky-400 hover:text-black border border-sky-500/30 text-xs font-bold transition">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span id="drive-btn-label">السحابة / Drive</span>
+        </button>
+        <button type="button" onclick="downloadStandaloneFile()" title="تحميل ملف التطبيق" class="admin-only flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-black border border-emerald-500/30 text-xs font-bold transition">
+          <i class="fa-solid fa-download"></i>
+          <span class="hidden sm:inline">تحميل التطبيق</span>
+        </button>
+        <button type="button" onclick="logoutUser()" title="تبديل الحساب / تسجيل خروج" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 border border-zinc-700 text-xs font-bold transition">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span class="hidden sm:inline">تبديل الحساب</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- شاشة تسجيل الدخول برقم سري (PIN) لتحديد الصلاحيات -->
+  <div id="auth-lock-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-cinema-950 p-4">
+    <div class="bg-cinema-900 border border-zinc-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-600 flex items-center justify-center text-white text-2xl mx-auto shadow-lg shadow-sky-500/20">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <div>
+        <h2 class="text-xl font-black text-white">SQUAD TEAM ACCOUNTS</h2>
+        <p class="text-xs text-zinc-400 mt-1">اختر حسابك وأدخل الرقم السري (PIN) لعرض بياناتك</p>
+      </div>
+
+      <form onsubmit="handlePinLogin(event)" class="space-y-4 text-right">
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1.5 font-bold">اختر الحساب:</label>
+          <select id="login-account-select" class="w-full px-3.5 py-3 rounded-xl bg-cinema-950 border border-zinc-800 text-sm font-bold text-white focus:outline-none focus:border-sky-500">
+            <option value="admin">باسم (المدير - تحكم كامل)</option>
+            <!-- يتم حقن أسماء الفريق ديناميكياً -->
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1.5 font-bold">الرقم السري (PIN):</label>
+          <input type="password" inputmode="numeric" id="login-pin-input" required placeholder="••••" class="w-full px-4 py-3 rounded-xl bg-cinema-950 border border-zinc-800 text-center text-lg font-black tracking-widest text-sky-400 focus:outline-none focus:border-sky-500" />
+        </div>
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-l from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-black text-sm shadow-lg shadow-sky-500/20 transition">
+          دخول إلى الحساب
+        </button>
+      </form>
+      <p class="text-[11px] text-zinc-500">الأرقام السرية الافتراضية (يمكنك تغييرها من إعدادات المدير):<br/>المدير: <strong class="text-zinc-300">0000</strong> • كيرو: <strong class="text-zinc-300">1111</strong> • أرميا: <strong class="text-zinc-300">2222</strong></p>
+    </div>
+  </div>
+
+  <!-- المحتوى الرئيسي -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- 1. بطاقات ملخص الفريق (كيرو - أرميا - إضافة عضو) - تظهر للمدير فقط -->
+    <section id="admin-team-overview" class="admin-only">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-bold text-zinc-400 flex items-center gap-2">
+          <i class="fa-solid fa-id-card-clip text-sky-400"></i>
+          بروفايلات الفريق (اختر الشخص لعرض حسابه وتسجيل شغل جديد)
+        </h2>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="openPinsModal()" class="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl transition">
+            <i class="fa-solid fa-key"></i> الأرقام السرية (PINs)
+          </button>
+          <button type="button" onclick="openRatesModal()" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl transition">
+            <i class="fa-solid fa-tags"></i> إدارة أسعار الشغل
+          </button>
+          <button type="button" onclick="openAddMemberModal()" class="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 bg-sky-500/10 border border-sky-500/20 px-3 py-1.5 rounded-xl transition">
+            <i class="fa-solid fa-user-plus"></i> إضافة عضو جديد
+          </button>
+        </div>
+      </div>
+
+      <div id="members-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- يتم الحقن ديناميكياً -->
+      </div>
+    </section>
+
+    <!-- 2. مساحة العمل للبروفايل المختار -->
+    <section id="active-profile-section" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- العمود الأيمن: تسجيل شغلانة جديدة أو دفعة مالية (للمدير فقط) -->
+      <div id="admin-forms-column" class="admin-only lg:col-span-5 space-y-5">
+
+        <!-- نموذج تسجيل شغلانة جديدة -->
+        <div class="bg-cinema-900 border border-zinc-800/90 rounded-3xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+              <i class="fa-solid fa-clapperboard text-sky-400"></i>
+              تسجيل شغلانة لـ <span id="form-member-name" class="text-sky-400">كيرو</span>
+            </h3>
+            <span id="form-member-role-badge" class="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 font-bold">تصوير ومونتاج</span>
+          </div>
+
+          <form onsubmit="handleAddWorkEntry(event)" class="space-y-3.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-zinc-400 mb-1 font-semibold">تاريخ الشغلانة</label>
+                <input type="date" id="entry-date" required class="w-full px-3 py-2 rounded-xl bg-cinema-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-sky-500" />
+              </div>
+              <div>
+                <label class="block text-xs text-zinc-400 mb-1 font-semibold">اسم الشغلانة / المشروع</label>
+                <input type="text" id="entry-project" required placeholder="مثال: إعلان مطعم / فرح / ريلز" class="w-full px-3 py-2 rounded-xl bg-cinema-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-sky-500" />
+              </div>
+            </div>
+
+            <!-- اختصارات سريعة مخصصة لكل عضو -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-[11px] text-zinc-400 font-semibold">إضافة سريعة (تصوير / مونتاج / معدات):</span>
+                <button type="button" onclick="openRatesModal()" class="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+                  <i class="fa-solid fa-pen-to-square"></i> تعديل الأسعار
+                </button>
+              </div>
+              <div id="quick-presets-container" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <!-- إضافة بند أو معدة للشغلانة -->
+            <div class="p-3 rounded-2xl bg-cinema-950 border border-zinc-800/90 space-y-2.5">
+              <span class="block text-[11px] text-sky-400 font-bold">تفاصيل الشغلانة (تصوير، مونتاج، أو معدات مؤجرة منه):</span>
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                <select id="line-type" class="sm:col-span-3 px-2 py-2 rounded-xl bg-cinema-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-sky-500">
+                  <option value="shooting">تصوير</option>
+                  <option value="editing">مونتاج</option>
+                  <option value="rental">إيجار معدة</option>
+                  <option value="other">أخرى</option>
+                </select>
+                <input type="text" id="line-desc" placeholder="اسم المعدة أو نوع الشغل..." class="sm:col-span-6 px-3 py-2 rounded-xl bg-cinema-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-sky-500" />
+                <input type="number" id="line-amount" min="0" step="10" placeholder="السعر" class="sm:col-span-3 px-2.5 py-2 rounded-xl bg-cinema-900 border border-zinc-800 text-xs font-bold text-amber-400 focus:outline-none focus:border-amber-500" />
+              </div>
+
+              <div class="flex items-center justify-between gap-2">
+                <label class="flex items-center gap-1.5 text-[11px] text-zinc-400 cursor-pointer">
+                  <input type="checkbox" id="save-as-preset" class="rounded bg-zinc-800 border-zinc-700 text-sky-500 focus:ring-0" />
+                  <span>احفظ البند ده في اختصاراته السريعة للمرات الجاية</span>
+                </label>
+                <button type="button" onclick="addLineToDraft()" class="px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black text-xs font-extrabold transition shrink-0">
+                  + أضف البند
+                </button>
+              </div>
+
+              <!-- قائمة البنود المضافة للشغلانة الحالية -->
+              <div id="draft-lines-list" class="space-y-1.5 pt-2 border-t border-zinc-800/80">
+                <p class="text-[11px] text-zinc-500 text-center py-2">أضف بنداً واحداً على الأقل (مثلاً: يوم تصوير + إيجار كاميرا)</p>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-zinc-800 text-xs">
+                <span class="text-zinc-400 font-bold">إجمالي مستحقات الشغلانة:</span>
+                <span class="text-base font-black text-amber-400"><span id="draft-total-amount">0</span> ج.م</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs text-zinc-400 mb-1 font-semibold">ملاحظات إضافية (اختياري)</label>
+              <input type="text" id="entry-notes" placeholder="مثال: تسليم 3 ريلز + إيجار عدسة 85mm" class="w-full px-3 py-2 rounded-xl bg-cinema-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-sky-500" />
+            </div>
+
+            <button type="submit" class="w-full py-3 rounded-2xl bg-gradient-to-l from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-black text-sm shadow-lg shadow-sky-500/20 transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-check-circle"></i>
+              <span>حفظ الشغلانة في حساب <span id="submit-btn-member">كيرو</span></span>
+            </button>
+          </form>
+        </div>
+
+        <!-- نموذج تسجيل دفعة مالية / تحويل (Payment) -->
+        <div class="bg-cinema-900 border border-zinc-800/90 rounded-3xl p-5 shadow-xl">
+          <h3 class="text-sm font-extrabold text-emerald-400 mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-money-bill-transfer"></i>
+            تسجيل دفعة مالية / تحويل لـ <span id="pay-member-name">كيرو</span>
+          </h3>
+          <form onsubmit="handleAddPayment(event)" class="space-y-3">
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] text-zinc-400 mb-1">تاريخ الدفع</label>
+                <input type="date" id="pay-date" required class="w-full px-3 py-2 rounded-xl bg-cinema-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-emerald-500" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-zinc-400 mb-1">المبلغ المدفوع (ج.م)</label>
+                <input type="number" id="pay-amount" required min="1" step="10" placeholder="1500" class="w-full px-3 py-2 rounded-xl bg-cinema-950 border border-zinc-800 text-xs font-black text-emerald-400 focus:outline-none focus:border-emerald-500" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] text-zinc-400 mb-1">طريقة الدفع</label>
+                <select id="pay-method" class="w-full px-3 py-2 rounded-xl bg-cinema-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-emerald-500">
+                  <option value="InstaPay">إنستاباي (InstaPay)</option>
+                  <option value="Cash">كاش (Cash)</option>
+                  <option value="Vodafone Cash">فودافون كاش</option>
+                  <option value="Bank Transfer">تحويل بنكي</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-zinc-400 mb-1">بيان / عن شغلانة</label>
+                <input type="text" id="pay-note" placeholder="مثال: دفعة تحت الحساب" class="w-full px-3 py-2 rounded-xl bg-cinema-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-emerald-500" />
+              </div>
+            </div>
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/40 text-emerald-300 hover:text-white font-extrabold text-xs transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-hand-holding-dollar"></i>
+              <span>تسجيل الدفعة وخصمها من الرصيد</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- العمود الأيسر: كشف الحساب التفصيلي والفلترة والتصدير -->
+      <div id="ledger-column" class="lg:col-span-7 space-y-4">
+        <div class="bg-cinema-900 border border-zinc-800/90 rounded-3xl p-5 shadow-xl">
+
+          <!-- رأس كشف الحساب -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-800">
+            <div>
+              <span class="text-[11px] text-sky-400 font-bold">كشف الحساب التفصيلي</span>
+              <h2 class="text-xl font-black text-white mt-0.5" id="ledger-member-title">حساب كيرو</h2>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="syncCloudNow()" class="px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500 border border-sky-500/30 text-sky-400 hover:text-black text-xs font-extrabold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate"></i>
+                <span>تحديث الحساب</span>
+              </button>
+              <button type="button" onclick="exportStatementPDF()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-pdf"></i>
+                <span>كشف حساب PDF</span>
+              </button>
+              <button type="button" onclick="copyWhatsAppStatement()" class="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 text-emerald-400 hover:text-white text-xs font-extrabold transition flex items-center gap-1.5">
+                <i class="fa-brands fa-whatsapp"></i>
+                <span>نسخ للواتساب</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- بطاقات الأرقام للملف الشخصي -->
+          <div class="grid grid-cols-3 gap-2.5 my-4">
+            <div class="p-3 rounded-2xl bg-cinema-950 border border-zinc-800">
+              <span class="text-[10px] text-zinc-400 block">إجمالي الشغل والمعدات</span>
+              <span class="text-sm sm:text-lg font-black text-white mt-0.5 block"><span id="stat-total-earned">0</span> <small class="text-[10px] font-normal text-zinc-400">ج.م</small></span>
+            </div>
+            <div class="p-3 rounded-2xl bg-cinema-950 border border-zinc-800">
+              <span class="text-[10px] text-zinc-400 block">إجمالي المدفوع له</span>
+              <span class="text-sm sm:text-lg font-black text-emerald-400 mt-0.5 block"><span id="stat-total-paid">0</span> <small class="text-[10px] font-normal text-zinc-400">ج.م</small></span>
+            </div>
+            <div class="p-3 rounded-2xl bg-gradient-to-l from-amber-500/15 to-orange-500/5 border border-amber-500/30">
+              <span class="text-[10px] text-amber-300 block font-bold">المتبقي له عندك</span>
+              <span class="text-sm sm:text-lg font-black text-amber-400 mt-0.5 block"><span id="stat-balance-due">0</span> <small class="text-[10px] font-normal">ج.م</small></span>
+            </div>
+          </div>
+
+          <!-- فلترة السجل -->
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="setLedgerFilter('all')" data-filter="all" class="filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500 text-black transition">الكل</button>
+              <button type="button" onclick="setLedgerFilter('work')" data-filter="work" class="filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-cinema-950 text-zinc-400 border border-zinc-800 hover:text-white transition">الشغل والمعدات</button>
+              <button type="button" onclick="setLedgerFilter('payment')" data-filter="payment" class="filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-cinema-950 text-zinc-400 border border-zinc-800 hover:text-white transition">الدفعات المسددة</button>
+            </div>
+            <input type="text" id="ledger-search" oninput="renderLedger()" placeholder="بحث باسم الشغلانة أو التاريخ..." class="w-full sm:w-52 px-3 py-1.5 rounded-xl bg-cinema-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-sky-500" />
+          </div>
+
+          <!-- قائمة الحركات (الشغلانات + الدفعات) -->
+          <div id="ledger-list" class="space-y-3 max-h-[600px] overflow-y-auto pl-1">
+            <!-- يتم الحقن ديناميكياً -->
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================================= -->
+  <!-- نافذة إدارة وتعديل أسعار الشغل والمعدات لكل عضو          -->
+  <!-- ========================================================= -->
+  <div id="rates-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-cinema-900 border border-zinc-800 rounded-3xl max-w-xl w-full p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+          <i class="fa-solid fa-tags text-emerald-400"></i>
+          إدارة أسعار الشغل والمعدات لـ <span id="rates-modal-member-name" class="text-emerald-400">كيرو</span>
+        </h3>
+        <button type="button" onclick="closeRatesModal()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- تبديل الشخص داخل النافذة -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-zinc-400 font-bold">اختر الشخص:</span>
+        <select id="rates-member-select" onchange="renderRatesModalList()" class="px-3 py-1.5 rounded-xl bg-cinema-950 border border-zinc-800 text-xs font-bold text-white focus:outline-none focus:border-emerald-500"></select>
+      </div>
+
+      <!-- قائمة الأسعار الحالية القابلة للتعديل -->
+      <div id="rates-list-container" class="space-y-2.5"></div>
+
+      <!-- إضافة بند تسعير جديد -->
+      <div class="p-3.5 rounded-2xl bg-cinema-950 border border-zinc-800 space-y-2.5">
+        <span class="block text-xs font-bold text-sky-400">+ إضافة بند تسعير جديد لقائمته:</span>
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+          <select id="new-rate-type" class="sm:col-span-3 px-2 py-2 rounded-xl bg-cinema-900 border border-zinc-800 text-xs text-white">
+            <option value="shooting">تصوير</option>
+            <option value="editing">مونتاج</option>
+            <option value="rental">إيجار معدة</option>
+            <option value="other">أخرى</option>
+          </select>
+          <input type="text" id="new-rate-desc" placeholder="اسم البند (مثال: يوم تصوير إضافي)" class="sm:col-span-6 px-3 py-2 rounded-xl bg-cinema-900 border border-zinc-800 text-xs text-white" />
+          <input type="number" id="new-rate-amount" min="0" step="10" placeholder="السعر" class="sm:col-span-3 px-2.5 py-2 rounded-xl bg-cinema-900 border border-zinc-800 text-xs font-bold text-emerald-400" />
+        </div>
+        <div class="flex justify-end">
+          <button type="button" onclick="addNewPresetRate()" class="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black text-xs font-extrabold transition">
+            إضافة للقائمة
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t border-zinc-800">
+        <button type="button" onclick="closeRatesModal()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-extrabold">تم وحفظ التعديلات</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- نافذة إدارة الأرقام السرية (PINs) للمدير                  -->
+  <!-- ========================================================= -->
+  <div id="pins-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-cinema-900 border border-zinc-800 rounded-3xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+          <i class="fa-solid fa-key text-amber-400"></i>
+          الأرقام السرية لدخول كل شخص (PIN)
+        </h3>
+        <button type="button" onclick="closePinsModal()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="pins-list-container" class="space-y-3"></div>
+      <div class="flex justify-end pt-2">
+        <button type="button" onclick="savePinsSettings()" class="px-5 py-2.5 rounded-xl bg-amber-500 text-black text-xs font-extrabold">حفظ الأرقام السرية</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- نافذة ربط ومزامنة السحابة (Firebase + Google Drive)        -->
+  <!-- ========================================================= -->
+  <div id="drive-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-cinema-900 border border-zinc-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-up text-sky-400 text-lg"></i>
+          المزامنة الفورية مع موبايلات الفريق + Google Drive
+        </h3>
+        <button type="button" onclick="closeDriveModal()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-4 text-xs text-zinc-300 leading-relaxed">
+        <!-- قسم Firebase Realtime للمزامنة مع كيرو وأرميا -->
+        <div class="p-3.5 rounded-2xl bg-sky-950/25 border border-sky-500/30 space-y-2.5">
+          <span class="block text-xs font-extrabold text-sky-400">1. المزامنة الحية مع موبايل كيرو وأرميا (Firebase Realtime):</span>
+          <p class="text-[11px] text-zinc-400">ضع رابط قاعدة بيانات Firebase ليصل أي تحديث تسجله إلى موبايل كيرو وأرميا فوراً:</p>
+          <div class="flex gap-2">
+            <input type="url" id="team-firebase-url" dir="ltr" placeholder="https://your-project-default-rtdb.firebaseio.com" class="flex-1 px-3 py-2 rounded-xl bg-cinema-950 border border-zinc-800 text-xs text-sky-300 focus:outline-none focus:border-sky-500" />
+            <button type="button" onclick="saveTeamCloudUrl()" class="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-extrabold text-xs shrink-0">ربط</button>
+          </div>
+          <div id="direct-member-links-box" class="space-y-1.5 pt-1">
+            <!-- يتم حقن روابط التثبيت المباشرة لكل عضو هنا -->
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-cinema-950 border border-zinc-800 space-y-2.5">
+          <label class="block text-[11px] font-bold text-zinc-300">2. Google OAuth Client ID (للحفظ المباشر في Google Drive):</label>
+          <input type="text" id="google-client-id" dir="ltr" placeholder="123456789-xxxx.apps.googleusercontent.com" class="w-full px-3 py-2 rounded-xl bg-cinema-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-sky-500" />
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button type="button" onclick="connectAndBackupToGoogleDrive()" class="flex-1 py-2.5 px-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-extrabold text-xs transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <span>حفظ نسخة على Google Drive</span>
+            </button>
+            <button type="button" onclick="restoreFromGoogleDrive()" class="flex-1 py-2.5 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-cloud-arrow-down"></i>
+              <span>استرجاع من Drive</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="border-t border-zinc-800 pt-3">
+          <span class="block text-[11px] text-zinc-400 mb-2 font-bold">أو حفظ / استرجاع يدوي سريع (لرفعه على Google Drive أو iCloud):</span>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="exportBackupJsonFile()" class="py-2.5 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 text-emerald-300 hover:text-white font-bold text-xs transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-file-export"></i>
+              <span>تصدير ملف النسخة</span>
+            </button>
+            <label class="py-2.5 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-file-import"></i>
+              <span>استيراد ملف نسخة</span>
+              <input type="file" accept=".json" onchange="importBackupJsonFile(event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة إضافة عضو جديد -->
+  <div id="add-member-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-cinema-900 border border-zinc-800 rounded-3xl max-w-md w-full p-5 shadow-2xl">
+      <h3 class="text-base font-extrabold text-white mb-4">إضافة شخص جديد للفريق</h3>
+      <form onsubmit="handleCreateMember(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">الاسم</label>
+          <input type="text" id="new-member-name" required placeholder="مثال: مينا / يوسف..." class="w-full px-3.5 py-2.5 rounded-xl bg-cinema-950 border border-zinc-800 text-sm text-white focus:outline-none focus:border-sky-500" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">طبيعة الشغل</label>
+          <input type="text" id="new-member-role" required placeholder="مثال: مصور / فني إضاءة / مونتير" class="w-full px-3.5 py-2.5 rounded-xl bg-cinema-950 border border-zinc-800 text-sm text-white focus:outline-none focus:border-sky-500" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeAddMemberModal()" class="px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-sky-500 text-black text-xs font-extrabold">إضافة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- حاوية مخفية لتوليد PDF كشف الحساب -->
+  <div class="fixed -left-[9999px] top-0">
+    <div id="statement-pdf-target" dir="rtl" style="font-family:'Cairo',sans-serif;background:#fff;color:#18181b;padding:32px;width:760px;"></div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-300 translate-y-2">
+    <div class="bg-zinc-900 border border-sky-500/40 text-white px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2 text-xs font-bold">
+      <i id="toast-icon" class="fa-solid fa-circle-check text-sky-400"></i>
+      <span id="toast-message">تم بنجاح</span>
+    </div>
+  </div>
+
+  <textarea id="clipboard-helper" class="fixed -top-96 opacity-0 pointer-events-none"></textarea>
+
+  <script>
+    // ==========================================
+    // 1. INITIAL DATA (KIRO & EREMIA + PINS)
+    // ==========================================
+    const STORAGE_KEY = 'squad_team_accounts_v2';
+    const DRIVE_CLIENT_KEY = 'squad_drive_client_id';
+    const TEAM_CLOUD_KEY = 'squad_team_firebase_url';
+    const SESSION_ROLE_KEY = 'squad_team_session_role';
+
+    const DEFAULT_MEMBERS = [
+      {
+        id: 'kiro',
+        name: 'كيرو',
+        pin: '1111',
+        role: 'تصوير + مونتاج + إيجار كاميرا وعدسة',
+        color: 'sky',
+        presets: [
+          { type: 'shooting', desc: 'يوم تصوير (أوردر)', amount: 1500 },
+          { type: 'editing', desc: 'مونتاج ريلز سوشيال ميديا', amount: 500 },
+          { type: 'editing', desc: 'مونتاج فيديو رئيسي / إعلان', amount: 1500 },
+          { type: 'rental', desc: 'إيجار الكاميرا والعدسة (من كيرو)', amount: 1000 }
+        ]
+      },
+      {
+        id: 'eremia',
+        name: 'أرميا',
+        pin: '2222',
+        role: 'تصوير + إيجار معدات متنوعة',
+        color: 'amber',
+        presets: [
+          { type: 'shooting', desc: 'يوم تصوير (أوردر)', amount: 1500 },
+          { type: 'rental', desc: 'إيجار كاميرا إضافية', amount: 1200 },
+          { type: 'rental', desc: 'إيجار إضاءة / سوفت بوكس', amount: 500 },
+          { type: 'rental', desc: 'إيجار جيمبال / صوت', amount: 400 }
+        ]
+      }
+    ];
+
+    const TYPE_LABELS = {
+      shooting: { label: 'تصوير', badge: 'bg-sky-500/15 text-sky-400 border-sky-500/30' },
+      editing: { label: 'مونتاج', badge: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
+      rental: { label: 'إيجار معدات', badge: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+      other: { label: 'أخرى', badge: 'bg-zinc-800 text-zinc-300 border-zinc-700' }
+    };
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (!parsed.adminPin) parsed.adminPin = '0000';
+          return parsed;
+        }
+      } catch (e) {}
+      return {
+        adminPin: '0000',
+        members: JSON.parse(JSON.stringify(DEFAULT_MEMBERS)),
+        entries: [] // { id, memberId, kind: 'work'|'payment', date, project, lines: [], amount, method, notes }
+      };
+    }
+
+    // قراءة رابط السحابة والعضو المحدد في اللينك (?cloud=...&member=kiro)
+    function detectCloudUrlFromParam() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const c = params.get('cloud');
+        if (c) {
+          localStorage.setItem(TEAM_CLOUD_KEY, c);
+          return c;
+        }
+      } catch (e) {}
+      return localStorage.getItem(TEAM_CLOUD_KEY) || '';
+    }
+
+    function detectPreselectedMemberFromParam() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('member') || '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function detectPinFromParam() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('pin') || '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    const state = {
+      data: loadData(),
+      currentRole: sessionStorage.getItem(SESSION_ROLE_KEY) || null, // 'admin' أو memberId ('kiro', 'eremia')
+      activeMemberId: 'kiro',
+      draftLines: [],
+      ledgerFilter: 'all',
+      cloudUrl: detectCloudUrlFromParam(),
+      preselectedMember: detectPreselectedMemberFromParam(),
+      urlPin: detectPinFromParam(),
+      googleClientId: localStorage.getItem(DRIVE_CLIENT_KEY) || '',
+      googleAccessToken: null
+    };
+
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+      } catch (e) {}
+      if (state.cloudUrl && state.currentRole === 'admin') {
+        pushTeamToCloud();
+      }
+    }
+
+    async function pushTeamToCloud() {
+      const base = (state.cloudUrl || '').trim().replace(/\/+$/, '');
+      if (!base) return;
+      try {
+        await fetch(`${base}/squad_team_ledger.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state.data)
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // ==========================================
+    // 1.5 AUTHENTICATION & ROLE ISOLATION
+    // ==========================================
+    function populateLoginDropdown() {
+      const sel = document.getElementById('login-account-select');
+      if (!sel) return;
+      if (state.preselectedMember) {
+        const target = state.data.members.find(m => m.id === state.preselectedMember);
+        if (target) {
+          sel.innerHTML = `<option value="${target.id}">${target.name} (حسابي الشخصي)</option>`;
+          return;
+        }
+      }
+      sel.innerHTML = `<option value="admin">باسم (المدير - تحكم كامل)</option>` +
+        state.data.members.map(m => `<option value="${m.id}">${m.name} (حسابي الشخصي)</option>`).join('');
+    }
+
+    async function handlePinLogin(e) {
+      e.preventDefault();
+      const chosen = document.getElementById('login-account-select').value;
+      const pin = document.getElementById('login-pin-input').value.trim();
+
+      // سحب أحدث الأرقام السرية من السحابة قبل التحقق لضمان قبول الرقم السري الجديد فوراً
+      if (state.cloudUrl) {
+        await pullTeamFromCloud(true);
+      }
+
+      if (chosen === 'admin') {
+        if (pin !== (state.data.adminPin || '0000')) {
+          showToast('الرقم السري للمدير غير صحيح', true);
+          return;
+        }
+        state.currentRole = 'admin';
+      } else {
+        const mem = state.data.members.find(m => m.id === chosen);
+        const validPin = String(mem?.pin || '1111').trim();
+        const isUrlPinMatch = state.urlPin && chosen === state.preselectedMember && pin === state.urlPin;
+        if (!mem || (pin !== validPin && !isUrlPinMatch)) {
+          showToast('الرقم السري غير صحيح', true);
+          return;
+        }
+        if (isUrlPinMatch) mem.pin = state.urlPin;
+        state.currentRole = mem.id;
+        state.activeMemberId = mem.id;
+      }
+
+      sessionStorage.setItem(SESSION_ROLE_KEY, state.currentRole);
+      document.getElementById('login-pin-input').value = '';
+      applyRolePermissions();
+    }
+
+    function logoutUser() {
+      state.currentRole = null;
+      sessionStorage.removeItem(SESSION_ROLE_KEY);
+      populateLoginDropdown();
+      document.getElementById('auth-lock-screen').classList.remove('hidden');
+    }
+
+    function applyRolePermissions() {
+      const lockScreen = document.getElementById('auth-lock-screen');
+      if (!state.currentRole) {
+        populateLoginDropdown();
+        lockScreen.classList.remove('hidden');
+        return;
+      }
+      lockScreen.classList.add('hidden');
+
+      const isAdmin = state.currentRole === 'admin';
+      document.querySelectorAll('.admin-only').forEach(el => {
+        if (isAdmin) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+
+      const ledgerCol = document.getElementById('ledger-column');
+      const roleLabel = document.getElementById('current-role-label');
+      const subTitle = document.getElementById('header-subtitle');
+
+      if (isAdmin) {
+        ledgerCol.className = 'lg:col-span-7 space-y-4';
+        roleLabel.textContent = 'وضع المدير';
+        subTitle.textContent = 'إدارة حسابات الفريق والمونتاج وإيجار المعدات';
+        renderMembersGrid();
+        renderActiveProfile();
+      } else {
+        state.activeMemberId = state.currentRole;
+        const mem = state.data.members.find(m => m.id === state.currentRole);
+        ledgerCol.className = 'lg:col-span-12 space-y-4';
+        roleLabel.textContent = `حساب: ${mem ? mem.name : ''}`;
+        subTitle.textContent = 'كشف حسابك الشخصي (للاطلاع والمتابعة)';
+        renderActiveProfile();
+      }
+    }
+
+    // إدارة الأرقام السرية (PINs)
+    function openPinsModal() {
+      const container = document.getElementById('pins-list-container');
+      container.innerHTML = `
+        <div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-cinema-950 border border-zinc-800">
+          <span class="text-xs font-bold text-amber-400">المدير (باسم)</span>
+          <input type="text" id="pin-input-admin" value="${state.data.adminPin || '0000'}" class="w-28 px-3 py-1.5 rounded-xl bg-cinema-900 border border-zinc-700 text-center text-sm font-black text-white" />
+        </div>
+      ` + state.data.members.map(m => `
+        <div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-cinema-950 border border-zinc-800">
+          <span class="text-xs font-bold text-white">${m.name}</span>
+          <input type="text" id="pin-input-${m.id}" value="${m.pin || '1111'}" class="w-28 px-3 py-1.5 rounded-xl bg-cinema-900 border border-zinc-700 text-center text-sm font-black text-sky-400" />
+        </div>
+      `).join('');
+      const modal = document.getElementById('pins-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePinsModal() {
+      const modal = document.getElementById('pins-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function savePinsSettings() {
+      const adminVal = document.getElementById('pin-input-admin').value.trim();
+      if (adminVal) state.data.adminPin = adminVal;
+      state.data.members.forEach(m => {
+        const inp = document.getElementById(`pin-input-${m.id}`);
+        if (inp && inp.value.trim()) m.pin = inp.value.trim();
+      });
+      saveData();
+      closePinsModal();
+      showToast('تم حفظ وتحديث الأرقام السرية!');
+    }
+
+    // إدارة وتعديل أسعار الشغل والمعدات لكل عضو
+    function openRatesModal() {
+      const sel = document.getElementById('rates-member-select');
+      sel.innerHTML = state.data.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+      sel.value = state.activeMemberId;
+      renderRatesModalList();
+      const modal = document.getElementById('rates-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeRatesModal() {
+      const modal = document.getElementById('rates-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      renderActiveProfile();
+    }
+
+    function renderRatesModalList() {
+      const memberId = document.getElementById('rates-member-select').value;
+      const member = state.data.members.find(m => m.id === memberId);
+      if (!member) return;
+
+      document.getElementById('rates-modal-member-name').textContent = member.name;
+      const container = document.getElementById('rates-list-container');
+
+      if (!member.presets || member.presets.length === 0) {
+        container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4">لا توجد بنود مسجلة لهذا الشخص بعد</p>`;
+        return;
+      }
+
+      container.innerHTML = member.presets.map((p, idx) => `
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2.5 rounded-2xl bg-cinema-950 border border-zinc-800">
+          <select onchange="updatePresetRate('${member.id}', ${idx}, 'type', this.value)" class="sm:col-span-3 px-2 py-1.5 rounded-xl bg-cinema-900 border border-zinc-800 text-xs text-white">
+            <option value="shooting" ${p.type === 'shooting' ? 'selected' : ''}>تصوير</option>
+            <option value="editing" ${p.type === 'editing' ? 'selected' : ''}>مونتاج</option>
+            <option value="rental" ${p.type === 'rental' ? 'selected' : ''}>إيجار معدة</option>
+            <option value="other" ${p.type === 'other' ? 'selected' : ''}>أخرى</option>
+          </select>
+          <input type="text" value="${p.desc}" onchange="updatePresetRate('${member.id}', ${idx}, 'desc', this.value)" class="sm:col-span-5 px-3 py-1.5 rounded-xl bg-cinema-900 border border-zinc-800 text-xs font-bold text-white" />
+          <div class="sm:col-span-3 flex items-center gap-1">
+            <input type="number" min="0" step="10" value="${p.amount}" onchange="updatePresetRate('${member.id}', ${idx}, 'amount', this.value)" class="w-full px-2.5 py-1.5 rounded-xl bg-cinema-900 border border-zinc-700 text-xs font-black text-emerald-400 text-center" />
+            <span class="text-[10px] text-zinc-400">ج.م</span>
+          </div>
+          <div class="sm:col-span-1 flex justify-end">
+            <button type="button" onclick="deletePresetRate('${member.id}', ${idx})" class="p-1.5 text-zinc-500 hover:text-red-400 transition">
+              <i class="fa-solid fa-trash text-xs"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updatePresetRate(memberId, idx, field, value) {
+      const member = state.data.members.find(m => m.id === memberId);
+      if (!member || !member.presets[idx]) return;
+      member.presets[idx][field] = field === 'amount' ? (parseFloat(value) || 0) : value.trim();
+      saveData();
+      if (memberId === state.activeMemberId) renderActiveProfile();
+      showToast('تم تحديث السعر ومزامنته!');
+    }
+
+    function addNewPresetRate() {
+      const memberId = document.getElementById('rates-member-select').value;
+      const member = state.data.members.find(m => m.id === memberId);
+      if (!member) return;
+
+      const type = document.getElementById('new-rate-type').value;
+      const desc = document.getElementById('new-rate-desc').value.trim();
+      const amount = parseFloat(document.getElementById('new-rate-amount').value) || 0;
+
+      if (!desc) {
+        showToast('اكتب اسم البند أولاً', true);
+        return;
+      }
+
+      if (!member.presets) member.presets = [];
+      member.presets.push({ type, desc, amount });
+
+      document.getElementById('new-rate-desc').value = '';
+      document.getElementById('new-rate-amount').value = '';
+
+      saveData();
+      renderRatesModalList();
+      if (memberId === state.activeMemberId) renderActiveProfile();
+      showToast('تمت إضافة البند الجديد للقائمة!');
+    }
+
+    function deletePresetRate(memberId, idx) {
+      const member = state.data.members.find(m => m.id === memberId);
+      if (!member || !member.presets) return;
+      member.presets.splice(idx, 1);
+      saveData();
+      renderRatesModalList();
+      if (memberId === state.activeMemberId) renderActiveProfile();
+      showToast('تم حذف البند');
+    }
+
+    async function pullTeamFromCloud(silent = false) {
+      const base = (state.cloudUrl || '').trim().replace(/\/+$/, '');
+      if (!base) return;
+      try {
+        const res = await fetch(`${base}/squad_team_ledger.json?t=${Date.now()}`, { cache: 'no-store' });
+        const remote = await res.json();
+        if (remote && Array.isArray(remote.members)) {
+          state.data = remote;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+          populateLoginDropdown();
+          if (state.currentRole) {
+            applyRolePermissions();
+          }
+          if (!silent) showToast('تم تحديث الحسابات من السحابة!');
+        } else if (state.currentRole === 'admin') {
+          await pushTeamToCloud();
+        }
+      } catch (e) {
+        if (!silent) showToast('تعذر الاتصال بالسحابة', true);
+      }
+    }
+
+    function syncCloudNow() {
+      if (!state.cloudUrl) {
+        showToast('السحابة غير مربوطة بعد', true);
+        return;
+      }
+      pullTeamFromCloud(false);
+    }
+
+    function saveTeamCloudUrl() {
+      const inp = document.getElementById('team-firebase-url');
+      if (!inp) return;
+      let val = inp.value.trim().replace(/\/+$/, '');
+      if (val && !val.startsWith('http')) val = 'https://' + val;
+      state.cloudUrl = val;
+      localStorage.setItem(TEAM_CLOUD_KEY, val);
+      if (val) {
+        pullTeamFromCloud(false);
+        renderDirectMemberLinks();
+        showToast('تم ربط السحابة بنجاح!');
+      } else {
+        showToast('تم فصل السحابة');
+      }
+    }
+
+    function copyMemberShareLink(memberId = '') {
+      const officialUrl = 'https://bassemhani9-design.github.io/team/team-accounts.html';
+      const currentUrl = window.location.href.split('?')[0];
+      const basePage = currentUrl.includes('github.io') ? currentUrl : officialUrl;
+      const params = new URLSearchParams();
+      if (state.cloudUrl) params.set('cloud', state.cloudUrl);
+      const mem = state.data.members.find(m => m.id === memberId);
+      if (memberId) params.set('member', memberId);
+      if (mem && mem.pin) params.set('pin', mem.pin);
+      const query = params.toString();
+      const shareUrl = query ? `${basePage}?${query}` : basePage;
+
+      const helper = document.getElementById('clipboard-helper');
+      helper.value = shareUrl;
+      helper.select();
+      document.execCommand('copy');
+      showToast(mem ? `تم نسخ رابط ${mem.name} الرسمي (PIN: ${mem.pin})! ابعتهوله يفتحه في Safari` : 'تم نسخ الرابط الرسمي!');
+    }
+
+    function renderDirectMemberLinks() {
+      const box = document.getElementById('direct-member-links-box');
+      if (!box) return;
+      box.innerHTML = state.data.members.map(m => `
+        <button type="button" onclick="copyMemberShareLink('${m.id}')" class="w-full py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-300 font-bold text-[11px] flex items-center justify-between transition">
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-link"></i> نسخ رابط التثبيت الخاص بـ <strong>${m.name}</strong> (PIN: ${m.pin})</span>
+          <span class="text-[10px] bg-amber-500/15 px-2 py-0.5 rounded">نسخ</span>
+        </button>
+      `).join('');
+    }
+
+    function formatMoney(num) {
+      return Math.round(Number(num) || 0).toLocaleString('en-US');
+    }
+
+    function todayISO() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    let toastTimer = null;
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-message').textContent = msg;
+      document.getElementById('toast-icon').className = isError
+        ? 'fa-solid fa-circle-exclamation text-red-400'
+        : 'fa-solid fa-circle-check text-sky-400';
+      t.classList.remove('opacity-0', 'translate-y-2');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-2'), 3000);
+    }
+
+    // ==========================================
+    // 2. MEMBER PROFILES & STATS
+    // ==========================================
+    function getMemberStats(memberId) {
+      let earned = 0;
+      let paid = 0;
+      state.data.entries.forEach(e => {
+        if (e.memberId !== memberId) return;
+        if (e.kind === 'work') earned += Number(e.amount) || 0;
+        if (e.kind === 'payment') paid += Number(e.amount) || 0;
+      });
+      return { earned, paid, balance: earned - paid };
+    }
+
+    function selectMember(memberId) {
+      state.activeMemberId = memberId;
+      state.draftLines = [];
+      renderMembersGrid();
+      renderActiveProfile();
+    }
+
+    function renderMembersGrid() {
+      const grid = document.getElementById('members-cards-grid');
+      grid.innerHTML = state.data.members.map(m => {
+        const stats = getMemberStats(m.id);
+        const isActive = m.id === state.activeMemberId;
+        return `
+          <div onclick="selectMember('${m.id}')" class="cursor-pointer rounded-3xl p-4 sm:p-5 border transition-all ${
+            isActive
+              ? 'bg-gradient-to-bl from-sky-500/15 via-cinema-900 to-cinema-900 border-sky-500 shadow-lg shadow-sky-500/10'
+              : 'bg-cinema-900 border-zinc-800/80 hover:border-zinc-700'
+          }">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl ${isActive ? 'bg-sky-500 text-black' : 'bg-zinc-800 text-zinc-200'} flex items-center justify-center font-black text-base">
+                  ${m.name.charAt(0)}
+                </div>
+                <div>
+                  <h3 class="text-base font-extrabold text-white">${m.name}</h3>
+                  <p class="text-[11px] text-zinc-400 mt-0.5">${m.role}</p>
+                </div>
+              </div>
+              ${isActive ? '<span class="px-2.5 py-0.5 rounded-full bg-sky-500 text-black text-[10px] font-black">مفتوح الآن</span>' : ''}
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-zinc-800/80 text-xs">
+              <div>
+                <span class="text-[10px] text-zinc-500 block">إجمالي الشغل</span>
+                <span class="font-bold text-zinc-200">${formatMoney(stats.earned)}</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-zinc-500 block">المدفوع</span>
+                <span class="font-bold text-emerald-400">${formatMoney(stats.paid)}</span>
+              </div>
+              <div class="text-left">
+                <span class="text-[10px] text-zinc-500 block">المتبقي له</span>
+                <span class="font-black text-amber-400 text-sm">${formatMoney(stats.balance)} ج.م</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderActiveProfile() {
+      const member = state.data.members.find(m => m.id === state.activeMemberId) || state.data.members[0];
+      if (!member) return;
+
+      document.getElementById('form-member-name').textContent = member.name;
+      document.getElementById('form-member-role-badge').textContent = member.role;
+      document.getElementById('submit-btn-member').textContent = member.name;
+      document.getElementById('pay-member-name').textContent = member.name;
+      document.getElementById('ledger-member-title').textContent = `كشف حساب: ${member.name}`;
+
+      // اختصارات سريعة مخصصة لكل شخص
+      const presetsContainer = document.getElementById('quick-presets-container');
+      presetsContainer.innerHTML = (member.presets || []).map((p, idx) => `
+        <button type="button" onclick="quickAddPreset(${idx})" class="px-2.5 py-1.5 rounded-xl bg-cinema-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-zinc-200 transition flex items-center gap-1.5">
+          <span>+ ${p.desc}</span>
+          <span class="text-amber-400 font-bold">(${formatMoney(p.amount)})</span>
+        </button>
+      `).join('');
+
+      renderDraftLines();
+      renderLedger();
+    }
+
+    // ==========================================
+    // 3. DRAFT WORK LINES & ADD ENTRY
+    // ==========================================
+    function quickAddPreset(presetIdx) {
+      const member = state.data.members.find(m => m.id === state.activeMemberId);
+      if (!member || !member.presets[presetIdx]) return;
+      const p = member.presets[presetIdx];
+      state.draftLines.push({ type: p.type, desc: p.desc, amount: Number(p.amount) || 0 });
+      renderDraftLines();
+    }
+
+    function addLineToDraft() {
+      const type = document.getElementById('line-type').value;
+      const descEl = document.getElementById('line-desc');
+      const amtEl = document.getElementById('line-amount');
+      const savePreset = document.getElementById('save-as-preset').checked;
+
+      const desc = descEl.value.trim();
+      const amount = parseFloat(amtEl.value) || 0;
+
+      if (!desc) {
+        showToast('اكتب اسم البند أو المعدة أولاً', true);
+        return;
+      }
+
+      state.draftLines.push({ type, desc, amount });
+
+      if (savePreset) {
+        const member = state.data.members.find(m => m.id === state.activeMemberId);
+        if (member) {
+          member.presets.push({ type, desc, amount });
+          saveData();
+          renderActiveProfile();
+        }
+        document.getElementById('save-as-preset').checked = false;
+      }
+
+      descEl.value = '';
+      amtEl.value = '';
+      renderDraftLines();
+    }
+
+    function removeDraftLine(idx) {
+      state.draftLines.splice(idx, 1);
+      renderDraftLines();
+    }
+
+    function renderDraftLines() {
+      const list = document.getElementById('draft-lines-list');
+      const totalEl = document.getElementById('draft-total-amount');
+
+      if (state.draftLines.length === 0) {
+        list.innerHTML = `<p class="text-[11px] text-zinc-500 text-center py-2">أضف بنداً واحداً على الأقل (مثلاً: يوم تصوير + إيجار معدة)</p>`;
+        totalEl.textContent = '0';
+        return;
+      }
+
+      let sum = 0;
+      list.innerHTML = state.draftLines.map((line, idx) => {
+        sum += Number(line.amount) || 0;
+        const tInfo = TYPE_LABELS[line.type] || TYPE_LABELS.other;
+        return `
+          <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-cinema-900 border border-zinc-800 text-xs">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-[10px] px-2 py-0.5 rounded border ${tInfo.badge} font-bold shrink-0">${tInfo.label}</span>
+              <span class="text-zinc-200 font-semibold truncate">${line.desc}</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="font-extrabold text-amber-400">${formatMoney(line.amount)} ج.م</span>
+              <button type="button" onclick="removeDraftLine(${idx})" class="text-zinc-500 hover:text-red-400">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      totalEl.textContent = formatMoney(sum);
+    }
+
+    function handleAddWorkEntry(e) {
+      e.preventDefault();
+      if (state.draftLines.length === 0) {
+        showToast('أضف بنداً واحداً على الأقل للشغلانة', true);
+        return;
+      }
+      const date = document.getElementById('entry-date').value || todayISO();
+      const project = document.getElementById('entry-project').value.trim();
+      const notes = document.getElementById('entry-notes').value.trim();
+      const totalAmount = state.draftLines.reduce((acc, l) => acc + (Number(l.amount) || 0), 0);
+
+      state.data.entries.unshift({
+        id: 'W-' + Date.now(),
+        memberId: state.activeMemberId,
+        kind: 'work',
+        date,
+        project,
+        lines: [...state.draftLines],
+        amount: totalAmount,
+        notes
+      });
+
+      state.draftLines = [];
+      document.getElementById('entry-project').value = '';
+      document.getElementById('entry-notes').value = '';
+
+      saveData();
+      renderMembersGrid();
+      renderActiveProfile();
+      showToast('تم تسجيل الشغلانة وإضافتها للحساب!');
+    }
+
+    function handleAddPayment(e) {
+      e.preventDefault();
+      const date = document.getElementById('pay-date').value || todayISO();
+      const amount = parseFloat(document.getElementById('pay-amount').value) || 0;
+      const method = document.getElementById('pay-method').value;
+      const note = document.getElementById('pay-note').value.trim() || 'دفعة حساب';
+
+      if (amount <= 0) return;
+
+      state.data.entries.unshift({
+        id: 'P-' + Date.now(),
+        memberId: state.activeMemberId,
+        kind: 'payment',
+        date,
+        project: note,
+        method,
+        amount
+      });
+
+      document.getElementById('pay-amount').value = '';
+      document.getElementById('pay-note').value = '';
+
+      saveData();
+      renderMembersGrid();
+      renderActiveProfile();
+      showToast('تم تسجيل الدفعة وخصمها من الرصيد!');
+    }
+
+    function deleteEntry(entryId) {
+      if (state.currentRole !== 'admin') return;
+      state.data.entries = state.data.entries.filter(e => e.id !== entryId);
+      saveData();
+      renderMembersGrid();
+      renderActiveProfile();
+      showToast('تم حذف الحركة');
+    }
+
+    // ==========================================
+    // 4. LEDGER DISPLAY & FILTERING
+    // ==========================================
+    function setLedgerFilter(f) {
+      state.ledgerFilter = f;
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        if (btn.dataset.filter === f) {
+          btn.className = 'filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500 text-black transition';
+        } else {
+          btn.className = 'filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-cinema-950 text-zinc-400 border border-zinc-800 hover:text-white transition';
+        }
+      });
+      renderLedger();
+    }
+
+    function renderLedger() {
+      const stats = getMemberStats(state.activeMemberId);
+      document.getElementById('stat-total-earned').textContent = formatMoney(stats.earned);
+      document.getElementById('stat-total-paid').textContent = formatMoney(stats.paid);
+      document.getElementById('stat-balance-due').textContent = formatMoney(stats.balance);
+
+      const q = (document.getElementById('ledger-search')?.value || '').trim().toLowerCase();
+      const entries = state.data.entries
+        .filter(e => e.memberId === state.activeMemberId)
+        .filter(e => state.ledgerFilter === 'all' || e.kind === state.ledgerFilter)
+        .filter(e => {
+          if (!q) return true;
+          const inProj = (e.project || '').toLowerCase().includes(q);
+          const inDate = (e.date || '').includes(q);
+          const inLines = (e.lines || []).some(l => l.desc.toLowerCase().includes(q));
+          return inProj || inDate || inLines;
+        })
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+      const container = document.getElementById('ledger-list');
+      if (entries.length === 0) {
+        container.innerHTML = `<div class="text-center py-12 text-zinc-500 text-xs">لا توجد حركات مسجلة في هذا القسم بعد</div>`;
+        return;
+      }
+
+      container.innerHTML = entries.map(e => {
+        const isAdmin = state.currentRole === 'admin';
+        if (e.kind === 'payment') {
+          return `
+            <div class="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">دفعة مسددة • ${e.method}</span>
+                  <span class="text-[11px] text-zinc-400">${e.date}</span>
+                </div>
+                <p class="text-sm font-bold text-white mt-1">${e.project}</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-black text-emerald-400">- ${formatMoney(e.amount)} ج.م</span>
+                ${isAdmin ? `<button type="button" onclick="deleteEntry('${e.id}')" class="text-zinc-500 hover:text-red-400 text-xs p-1"><i class="fa-solid fa-trash"></i></button>` : ''}
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="p-4 rounded-2xl bg-cinema-950 border border-zinc-800 space-y-2.5">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] font-bold text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded-lg">${e.date}</span>
+                  <h4 class="text-sm font-extrabold text-white">${e.project}</h4>
+                </div>
+                ${e.notes ? `<p class="text-[11px] text-zinc-400 mt-1">${e.notes}</p>` : ''}
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-sm font-black text-amber-400">+ ${formatMoney(e.amount)} ج.م</span>
+                ${isAdmin ? `<button type="button" onclick="deleteEntry('${e.id}')" class="text-zinc-500 hover:text-red-400 text-xs p-1"><i class="fa-solid fa-trash"></i></button>` : ''}
+              </div>
+            </div>
+
+            <div class="space-y-1 pt-2 border-t border-zinc-800/80">
+              ${(e.lines || []).map(l => {
+                const tInfo = TYPE_LABELS[l.type] || TYPE_LABELS.other;
+                return `
+                  <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[10px] px-2 py-0.5 rounded border ${tInfo.badge}">${tInfo.label}</span>
+                      <span class="text-zinc-300">${l.desc}</span>
+                    </div>
+                    <span class="font-bold text-zinc-200">${formatMoney(l.amount)} ج.م</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ==========================================
+    // 5. ADD NEW MEMBER MODAL
+    // ==========================================
+    function openAddMemberModal() {
+      const m = document.getElementById('add-member-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeAddMemberModal() {
+      const m = document.getElementById('add-member-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    function handleCreateMember(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-member-name').value.trim();
+      const role = document.getElementById('new-member-role').value.trim();
+      if (!name) return;
+
+      const id = 'mem_' + Date.now();
+      state.data.members.push({
+        id,
+        name,
+        pin: '3333',
+        role,
+        color: 'sky',
+        presets: [{ type: 'shooting', desc: 'يوم تصوير', amount: 1500 }]
+      });
+
+      document.getElementById('new-member-name').value = '';
+      document.getElementById('new-member-role').value = '';
+      saveData();
+      closeAddMemberModal();
+      selectMember(id);
+      showToast(`تمت إضافة ${name} للفريق!`);
+    }
+
+    // ==========================================
+    // 6. EXPORT PDF & WHATSAPP STATEMENT
+    // ==========================================
+    function copyWhatsAppStatement() {
+      const member = state.data.members.find(m => m.id === state.activeMemberId);
+      const stats = getMemberStats(state.activeMemberId);
+      const entries = state.data.entries
+        .filter(e => e.memberId === state.activeMemberId)
+        .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+      let text = `*كشف حساب تفصيلي - SQUAD STUDIOS*\n`;
+      text += `الاسم: *${member.name}*\n`;
+      text += `------------------------\n`;
+
+      entries.forEach(e => {
+        if (e.kind === 'work') {
+          text += `📅 *${e.date}* | ${e.project}\n`;
+          (e.lines || []).forEach(l => {
+            text += `   • ${l.desc}: ${formatMoney(l.amount)} ج.م\n`;
+          });
+          text += `   *الإجمالي: ${formatMoney(e.amount)} ج.م*\n\n`;
+        } else {
+          text += `✅ *${e.date}* | دفعة مسددة (${e.method}): *- ${formatMoney(e.amount)} ج.م*\n\n`;
+        }
+      });
+
+      text += `------------------------\n`;
+      text += `إجمالي الشغل والمعدات: ${formatMoney(stats.earned)} ج.م\n`;
+      text += `إجمالي المدفوع: ${formatMoney(stats.paid)} ج.م\n`;
+      text += `*المتبقي المستحق: ${formatMoney(stats.balance)} ج.م*`;
+
+      const helper = document.getElementById('clipboard-helper');
+      helper.value = text;
+      helper.select();
+      document.execCommand('copy');
+      showToast(`تم نسخ كشف حساب ${member.name} للواتساب!`);
+    }
+
+    function exportStatementPDF() {
+      const member = state.data.members.find(m => m.id === state.activeMemberId);
+      const stats = getMemberStats(state.activeMemberId);
+      const entries = state.data.entries
+        .filter(e => e.memberId === state.activeMemberId)
+        .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+      const rows = entries.map(e => {
+        if (e.kind === 'payment') {
+          return `
+            <tr style="background:#ecfdf5;border-bottom:1px solid #d1fae5;">
+              <td style="padding:8px;">${e.date}</td>
+              <td style="padding:8px;font-weight:700;color:#047857;">دفعة مسددة (${e.method}) - ${e.project}</td>
+              <td style="padding:8px;text-align:left;font-weight:800;color:#047857;">- ${formatMoney(e.amount)} ج.م</td>
+            </tr>
+          `;
+        }
+        const details = (e.lines || []).map(l => `${l.desc} (${formatMoney(l.amount)})`).join(' + ');
+        return `
+          <tr style="border-bottom:1px solid #e4e4e7;">
+            <td style="padding:8px;">${e.date}</td>
+            <td style="padding:8px;">
+              <strong>${e.project}</strong>
+              <div style="font-size:11px;color:#52525b;margin-top:2px;">${details}</div>
+            </td>
+            <td style="padding:8px;text-align:left;font-weight:800;">+ ${formatMoney(e.amount)} ج.م</td>
+          </tr>
+        `;
+      }).join('');
+
+      const target = document.getElementById('statement-pdf-target');
+      target.innerHTML = `
+        <div style="border-bottom:3px solid #0284c7;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <h1 style="margin:0;font-size:22px;font-weight:900;">SQUAD STUDIOS</h1>
+            <p style="margin:3px 0 0;font-size:12px;color:#52525b;">كشف حساب فريق العمل وإيجار المعدات</p>
+          </div>
+          <div style="text-align:left;">
+            <strong style="font-size:16px;color:#0284c7;">${member.name}</strong>
+            <p style="margin:2px 0 0;font-size:11px;color:#52525b;">تاريخ الاستخراج: ${todayISO()}</p>
+          </div>
+        </div>
+
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:18px;">
+          <thead>
+            <tr style="background:#18181b;color:#fff;">
+              <th style="padding:9px;text-align:right;">التاريخ</th>
+              <th style="padding:9px;text-align:right;">المشروع والتفاصيل (تصوير / مونتاج / معدات)</th>
+              <th style="padding:9px;text-align:left;">المبلغ</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+
+        <div style="background:#f4f4f5;border-radius:12px;padding:14px;width:280px;margin-right:auto;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+            <span>إجمالي المستحقات:</span><strong>${formatMoney(stats.earned)} ج.م</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#059669;margin-bottom:6px;">
+            <span>إجمالي المدفوع:</span><strong>- ${formatMoney(stats.paid)} ج.م</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:900;border-top:1px solid #d4d4d8;padding-top:6px;">
+            <span>المتبقي المستحق:</span><span style="color:#d97706;">${formatMoney(stats.balance)} ج.م</span>
+          </div>
+        </div>
+      `;
+
+      showToast('جاري تحميل كشف الحساب PDF...');
+      html2pdf().set({
+        margin: 8,
+        filename: `Statement-${member.name}-${todayISO()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(target).save().then(() => {
+        showToast('تم تحميل كشف الحساب بنجاح!');
+      });
+    }
+
+    // ==========================================
+    // 7. GOOGLE DRIVE BACKUP & RESTORE
+    // ==========================================
+    function openDriveModal() {
+      document.getElementById('google-client-id').value = state.googleClientId;
+      const tf = document.getElementById('team-firebase-url');
+      if (tf) tf.value = state.cloudUrl || '';
+      renderDirectMemberLinks();
+      const m = document.getElementById('drive-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeDriveModal() {
+      const m = document.getElementById('drive-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    function requestDriveToken(callback) {
+      const clientId = document.getElementById('google-client-id').value.trim();
+      if (!clientId) {
+        showToast('أدخل Google Client ID أولاً أو استخدم التصدير اليدوي بالأسفل', true);
+        return;
+      }
+      state.googleClientId = clientId;
+      localStorage.setItem(DRIVE_CLIENT_KEY, clientId);
+
+      if (typeof google === 'undefined' || !google.accounts) {
+        showToast('جاري تحميل مكتبة Google، حاول بعد لحظات', true);
+        return;
+      }
+
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: (response) => {
+          if (response.access_token) {
+            state.googleAccessToken = response.access_token;
+            document.getElementById('drive-btn-label').textContent = 'Drive متصل';
+            callback(response.access_token);
+          }
+        }
+      });
+      tokenClient.requestAccessToken();
+    }
+
+    async function connectAndBackupToGoogleDrive() {
+      requestDriveToken(async (token) => {
+        try {
+          showToast('جاري الحفظ على Google Drive...');
+          const searchRes = await fetch(
+            "https://www.googleapis.com/drive/v3/files?q=name='squad_team_accounts.json' and trashed=false",
+            { headers: { Authorization: 'Bearer ' + token } }
+          );
+          const searchData = await searchRes.json();
+          const existingFile = searchData.files && searchData.files[0];
+
+          const fileContent = JSON.stringify(state.data, null, 2);
+          const metadata = { name: 'squad_team_accounts.json', mimeType: 'application/json' };
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+          form.append('file', new Blob([fileContent], { type: 'application/json' }));
+
+          const url = existingFile
+            ? `https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=multipart`
+            : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+          const uploadRes = await fetch(url, {
+            method: existingFile ? 'PATCH' : 'POST',
+            headers: { Authorization: 'Bearer ' + token },
+            body: form
+          });
+
+          if (!uploadRes.ok) throw new Error('Drive upload failed');
+          showToast('تم حفظ قاعدة البيانات على Google Drive بنجاح!');
+        } catch (err) {
+          console.error(err);
+          showToast('تعذر الرفع على Drive، تأكد من صلاحيات الـ Client ID', true);
+        }
+      });
+    }
+
+    async function restoreFromGoogleDrive() {
+      requestDriveToken(async (token) => {
+        try {
+          showToast('جاري البحث عن النسخة في Google Drive...');
+          const searchRes = await fetch(
+            "https://www.googleapis.com/drive/v3/files?q=name='squad_team_accounts.json' and trashed=false",
+            { headers: { Authorization: 'Bearer ' + token } }
+          );
+          const searchData = await searchRes.json();
+          const existingFile = searchData.files && searchData.files[0];
+          if (!existingFile) {
+            showToast('لم يتم العثور على ملف محفوظ مسبقاً في Drive', true);
+            return;
+          }
+          const fileRes = await fetch(
+            `https://www.googleapis.com/drive/v3/files/${existingFile.id}?alt=media`,
+            { headers: { Authorization: 'Bearer ' + token } }
+          );
+          const json = await fileRes.json();
+          if (json && json.members) {
+            state.data = json;
+            saveData();
+            renderMembersGrid();
+            renderActiveProfile();
+            showToast('تم استرجاع جميع الحسابات من Google Drive!');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('حدث خطأ أثناء الاسترجاع من Drive', true);
+        }
+      });
+    }
+
+    function exportBackupJsonFile() {
+      const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Squad-Team-Backup-${todayISO()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('تم تحميل ملف النسخة الاحتياطية');
+    }
+
+    function importBackupJsonFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && parsed.members) {
+            state.data = parsed;
+            saveData();
+            renderMembersGrid();
+            renderActiveProfile();
+            closeDriveModal();
+            showToast('تم استرجاع البيانات بنجاح!');
+          }
+        } catch (err) {
+          showToast('ملف غير صالح', true);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function downloadStandaloneFile() {
+      const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'team-accounts.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('تم تحميل ملف التطبيق team-accounts.html');
+    }
+
+    // ==========================================
+    // 8. INIT
+    // ==========================================
+    window.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('entry-date').value = todayISO();
+      document.getElementById('pay-date').value = todayISO();
+      populateLoginDropdown();
+      if (state.cloudUrl) {
+        await pullTeamFromCloud(true);
+      }
+      applyRolePermissions();
+      if (state.cloudUrl) {
+        // تحديث تلقائي في الخلفية كل 20 ثانية ليظهر أي تعديل فوراً على موبايلات الفريق
+        setInterval(() => {
+          if (state.cloudUrl && state.currentRole && state.currentRole !== 'admin') {
+            pullTeamFromCloud(true);
+          }
+        }, 20000);
+      }
+    });
+  </script>
+</body>
+</html>
